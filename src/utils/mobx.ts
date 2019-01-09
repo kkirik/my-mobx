@@ -1,34 +1,34 @@
-import React from "react";
-import { render } from "react-dom";
+let CurrentObserver = null;
 
-let CurrentObserver;
 class Cell {
-  constructor(val) {
-    this.value = val;
-    this.reactions = new Set();
-  }
+  reactions: Set<ComputedCell> = new Set();
+
+  constructor(public value?) {}
+
   get() {
     if (CurrentObserver) {
       this.reactions.add(CurrentObserver);
     }
+
     return this.value;
   }
+
   set(val) {
     this.value = val;
+
     for (const reaction of this.reactions) {
       reaction.run();
     }
   }
-  unsubscribe(reaction) {
+
+  unsibscribe(reaction) {
     this.reactions.delete(reaction);
   }
 }
 
 class ComputedCell extends Cell {
-  constructor(computedFn, reactionFn) {
-    super();
-    this.computedFn = computedFn;
-    this.reactionFn = reactionFn;
+  constructor(private computedFn, private reactionFn) {
+    super(null);
     this.value = this.track();
   }
 
@@ -42,6 +42,7 @@ class ComputedCell extends Cell {
 
   run() {
     const newValue = this.track();
+
     if (newValue !== this.value) {
       this.value = newValue;
       CurrentObserver = null;
@@ -50,7 +51,7 @@ class ComputedCell extends Cell {
   }
 }
 
-function observable(target, key) {
+export function observable(_target, key): any {
   return {
     get() {
       if (!this.__observables) this.__observables = {};
@@ -58,6 +59,7 @@ function observable(target, key) {
       if (!observable) observable = this.__observables[key] = new Cell();
       return observable.get();
     },
+
     set(val) {
       if (!this.__observables) this.__observables = {};
       let observable = this.__observables[key];
@@ -67,8 +69,9 @@ function observable(target, key) {
   };
 }
 
-function observer(Component) {
+export function observer(Component) {
   const oldRender = Component.prototype.render;
+
   Component.prototype.render = function() {
     if (!this._reaction)
       this._reaction = new ComputedCell(oldRender.bind(this), () =>
@@ -77,31 +80,3 @@ function observer(Component) {
     return this._reaction.get();
   };
 }
-
-class Timer {
-  @observable count;
-  constructor(text) {
-    this.count = 0;
-  }
-}
-
-const AppState = new Timer();
-
-@observer
-class App extends React.Component {
-  onClick = () => {
-    this.props.timer.count++;
-  };
-  render() {
-    console.log("render");
-    const { timer } = this.props;
-    return (
-      <div>
-        <div>{timer.count}</div>
-        <button onClick={this.onClick}>click</button>
-      </div>
-    );
-  }
-}
-
-render(<App timer={AppState} />, document.getElementById("root"));
