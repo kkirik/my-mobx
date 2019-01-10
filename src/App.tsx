@@ -1,32 +1,41 @@
-import React from "react";
+import React from 'react';
 
-import { observer, observable } from "./utils/mobx";
+import { observer, observable, action, dec } from './utils/mobx';
 
 interface IProps {
   counterStore: CounterStore;
 }
 
 class CounterStore {
-  @observable counter: number = 0;
-  @observable observableVariable: number = 0;
+  @observable counter: number;
+  @observable observableVariable: number;
 
   constructor() {
     this.counter = 0;
     this.observableVariable = 0;
+
+    this.incrementCounter = this.incrementCounter.bind(this);
   }
 
-  incrementCounter = () => {
+  @action.bound
+  incrementCounter() {
     this.counter += 1;
-  };
+    this.observableVariable += 2;
+  }
 }
 
 @observer
 class Counter extends React.Component<IProps> {
   render() {
-    const { counter, incrementCounter } = this.props.counterStore;
+    const { counter, incrementCounter, observableVariable } = this.props.counterStore;
+
+    console.log('====================================');
+    console.log('render', counter, observableVariable);
+    console.log('====================================');
 
     return (
       <div>
+        <div>{observableVariable}</div>
         <div>{counter}</div>
         <button onClick={incrementCounter}>+1</button>
       </div>
@@ -40,7 +49,6 @@ class App extends React.Component {
 
     return (
       <div>
-        {counterStore.observableVariable}
         <Counter counterStore={counterStore} />
       </div>
     );
