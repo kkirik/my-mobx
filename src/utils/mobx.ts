@@ -17,7 +17,7 @@ class Cell {
     return this.value;
   }
 
-  set(val) {
+  set(val: any) {
     this.value = val;
 
     for (const reaction of this.reactions) {
@@ -25,7 +25,7 @@ class Cell {
     }
   }
 
-  unsubscribe(reaction) {
+  unsubscribe(reaction: ComputedCell) {
     this.reactions.delete(reaction);
   }
 }
@@ -113,10 +113,10 @@ export function observer(Component) {
  * @param fn
  */
 
-export function action(fn: object | Function, name?: string, descriptor?: object | any) {
+export function action(fn: object, name?: string, descriptor?: object | any) {
   let func;
 
-  if (typeof fn !== 'function') {
+  if (typeof fn !== "function") {
     func = descriptor.value;
   } else {
     func = fn;
@@ -135,6 +135,10 @@ export function action(fn: object | Function, name?: string, descriptor?: object
   return result;
 }
 
-action.bound = function(fn: object | Function, name?: string, descriptor?: object | any) {
+action.bound = function(
+  fn: object | Function,
+  name?: string,
+  descriptor?: object | any
+) {
   return action(descriptor.value.bind(fn), name, descriptor);
 };
